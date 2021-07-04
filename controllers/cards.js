@@ -1,6 +1,7 @@
 const Card = require('../models/card');
 const NotFoundError = require('../errors/not-found-err');
 const ValidationError = require('../errors/validation-err');
+const CopyrightError = require('../errors/copyright-err');
 
 module.exports.getCard = (req, res, next) => {
   Card.find({})
@@ -31,7 +32,7 @@ module.exports.deleteCard = (req, res, next) => {
         Card.findByIdAndRemove(req.params.cardId)
           .then((cards) => res.send({ cards }));
       } else {
-        res.send({ card });
+        throw new CopyrightError('Невозможно удалить чужую карточку');
       }
     })
     .catch(next);

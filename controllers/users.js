@@ -47,7 +47,13 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({
+      _id: user._id,
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new ValidationError('Переданы некорректные данные');
@@ -104,31 +110,15 @@ module.exports.patchAvatar = (req, res, next) => {
 };
 
 module.exports.login = (req, res, next) => {
-  // eslint-disable-next-line no-unused-vars
   const { email, password } = req.body;
-
-  User.findOne({ email }).select('+password')
+  return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
-      }
-      return bcrypt.compare(password, user.password)
-        .then((matched) => {
-          if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
-          }
-          const token = jwt.sign(
-            { _id: user._id },
-            'some-secret-key',
-            { expiresIn: '7d' },
-          );
-          return res
-            .cookie('token', token, {
-              maxAge: 3600000 * 24 * 7,
-              httpOnly: true,
-            })
-            .send({ token });
-        });
+      const token = jwt.sign({ _id: user._id }, 'secret-key', { expiresIn: '7d' });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        sameSite: true,
+        maxAge: 3600000 * 24 * 7,
+      }).send({ token });
     })
     .catch(new AuthentificationError('Неправильный адрес почты или пароль'))
     .catch(next);
