@@ -28,14 +28,19 @@ module.exports.deleteCard = (req, res, next) => {
       if (card === null) {
         throw new NotFoundError('Такой карточки нет');
       }
-      if (card.owner.equals(req.user.id)) {
+      if (card.owner.equals(req.user._id)) {
         Card.findByIdAndRemove(req.params.cardId)
           .then((cards) => res.send({ cards }));
       } else {
         throw new CopyrightError('Невозможно удалить чужую карточку');
       }
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new ValidationError('Некорректный запрос'));
+      }
+      return next(err);
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {
@@ -44,7 +49,12 @@ module.exports.likeCard = (req, res, next) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => res.send({ card }))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Карточка с указанным _id не найдена');
+      }
+      res.send({ card });
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         throw new ValidationError('Переданы некорректные данные');
@@ -61,7 +71,12 @@ module.exports.dislikeCard = (req, res, next) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => res.send({ card }))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Карточка с указанным _id не найдена');
+      }
+      res.send({ card });
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         throw new ValidationError('Переданы некорректные данные');

@@ -21,13 +21,16 @@ module.exports.getUserId = (req, res, next) => {
         res.send({ data: user });
       }
     })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        throw new ValidationError('Переданы некорректные данные');
+      }
+    })
     .catch(next);
 };
 
 module.exports.getUser = (req, res, next) => {
-  const token = req.cookies.jwt;
-  const payload = jwt.verify(token, 'some-secret-key');
-  User.findById(payload._id)
+  User.findById(req.user._id)
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'CastError') {
