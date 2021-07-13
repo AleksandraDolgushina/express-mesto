@@ -8,6 +8,8 @@ const routerUser = require('./routes/users');
 const routerCard = require('./routes/cards');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const cors = require('./middlewares/cors');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -21,6 +23,10 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useFindAndModify: false,
   useUnifiedTopology: true,
 });
+
+app.use(requestLogger);
+
+app.use(cors);
 
 app.post('/signup', celebrate({
   body: Joi.object().keys({
@@ -44,6 +50,7 @@ app.use(auth);
 app.use(routerUser);
 app.use(routerCard);
 
+app.use(errorLogger);
 app.use(errors());
 
 // eslint-disable-next-line no-unused-vars
