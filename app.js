@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const { celebrate, Joi } = require('celebrate');
+const crypto = require('crypto'); // экспортируем crypto
 const { errors } = require('celebrate');
 const cookieParser = require('cookie-parser');
 const routerUser = require('./routes/users');
@@ -24,6 +25,11 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
 });
 
+const randomString = crypto
+  .randomBytes(16) // сгенерируем случайную последовательность 16 байт (128 бит)
+  .toString('hex'); // приведём её к строке
+
+console.log(randomString); // 5cdd183194489560b0e6bfaf8a81541e
 app.use(requestLogger);
 
 app.use(cors);
